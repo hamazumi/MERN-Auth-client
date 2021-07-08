@@ -14,15 +14,50 @@ export default function Register(props) {
     const [ message, setMessage] = useState('')
 
     //function to handle form submission
-    const handleSubmit = e => {
-        e.preventDefault()
+    const handleSubmit = async e => {
+        try{
+            e.preventDefault()
+            //make a request body
+            const requestBody = {
+                name: name,
+                email: email,
+                password: password
+            }
+
+            //post registration data to the server
+            const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api-v1/users/register`, requestBody)
+
+            //take the token out of the response
+            const { token } = response.data
+
+            //set token in local storage
+            localStorage.setItem('jwtToken', token)
+
+            //decode the token
+            const decoded = jwt.decode(token)
+
+            //set the user in the App.js state
+            props.setCurrentUser(decoded)
+
+        }catch(err) {
+            //set message if error is 400
+            if(err.response.status === 400) {
+                setMessage(err.response.data.msg)
+            }else {
+                console.log(err)
+            }
+        }
         console.log('submit the form')
     }
 
     //redirect if the user is logged in 
+    if(props.currentUser) return <Redirect to='/profile' component={ Profile } currentUser={props.currentUser} />
+
     return (
         <div>  
             <h3>Register Here:</h3>
+
+            <p>{message}</p>
 
             <form onSubmit={handleSubmit}>
                 <label htmlFor='name-input'>Name:</label>
