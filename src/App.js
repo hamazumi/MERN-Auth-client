@@ -8,7 +8,8 @@ import Welcome from './components/Welcome.jsx'
 import {
   BrowserRouter as Router,
   Switch,
-  Route
+  Route,
+  Redirect
 } from 'react-router-dom'
 
 import {
@@ -16,6 +17,7 @@ import {
   useEffect
 } from 'react'
 
+import jwt from 'jsonwebtoken'
 
 function App() {
   // state holds user data if user is logged in 
@@ -23,12 +25,25 @@ function App() {
 
   // if user navigates away automatically log them in
   useEffect(() => {
-
-  })
+    // get token from local storage
+    const token = localStorage.getItem('jwtToken')
+    //if check for token
+    if(token) {
+      setCurrentUser(jwt.decode(token))
+    } else {
+      setCurrentUser(null)
+    }
+    //else set user in state to be null
+  }, [])
 
   // function to log the user out
   const handleLogout = () => {
-    console.log('log the user out')
+    // delete the jwt thats in local storage
+    if(localStorage.getItem('jwtToken')) {
+      localStorage.removeItem('jwtToken')
+      //set the user in state to be null
+      setCurrentUser(null)
+    }
   }
 
 
@@ -55,9 +70,10 @@ function App() {
             render={ props => <Login {...props} currentUser={ currentUser } setCurrentUser={ setCurrentUser } /> }
           />
 
+          {/* conditionally render a redirect for auth locked route */}
           <Route 
             path="/profile"
-            render={ props => <Profile {...props} currentUser={ currentUser } setCurrentUser={ setCurrentUser } /> }
+            render={ props => currentUser ? <Profile {...props} currentUser={ currentUser } handleLogout={ handleLogout } /> : <Redirect to='/login' /> }
           />
 
         </Switch>
